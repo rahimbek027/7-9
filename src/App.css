@@ -1,0 +1,36 @@
+/* index.css yoki App.css faylida */
+
+/* Body va html elementlarini to'liq kenglik va balandlik bilan sozlash */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Horizontal scrollingni oldini olish */
+}
+
+/* #root konteyneri ham to'liq balandlik va kenglikni egallashi kerak */
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ekran balandligini to'ldirish uchun container */
+.fullscreen-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* yoki 'center' if you want centered content */
+}
+
+/* Login sahifasi uchun to'liq ekran */
+.login-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

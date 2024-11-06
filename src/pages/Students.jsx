@@ -1,83 +1,105 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { Button, Form, Input, Modal, List, message } from 'antd';
-import { fetchStudents, addStudent, deleteStudent } from '../api/students';
+import React, { useState, useEffect } from 'react';
+import { List, Button, Modal, Form, Input, message } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const Students = () => {
-  const queryClient = useQueryClient();
+  const [user, setUser] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false); // Modalni ko'rsatish uchun state
+  const [form] = Form.useForm(); // Formni yaratish uchun
 
-  const { data, isLoading } = useQuery('students', fetchStudents);
+  const navigate = useNavigate();
 
-  const addMutation = useMutation(addStudent, {
-    onSuccess: () => {
-      queryClient.invalidateQueries('students');
-      message.success('Student added successfully');
-      setIsModalVisible(false); // Modalni yopish
-    },
-  });
+  // Foydalanuvchi ma'lumotlarini localStorage'dan olish
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    } else {
+      navigate('/'); // Agar user ma'lumotlari yo'q bo'lsa, login sahifasiga yo'naltirish
+    }
+  }, [navigate]);
 
-  const deleteMutation = useMutation(deleteStudent, {
-    onSuccess: () => {
-      queryClient.invalidateQueries('students');
-      message.success('Student deleted successfully');
-    },
-  });
+  // Student qo'shish formasi
+  const onCreateStudent = (values) => {
+    const newStudent = {
+      name: values.name,
+      age: values.age,
+      address: values.address,
+    };
 
-  const [form] = Form.useForm();
-  const [isModalVisible, setIsModalVisible] = useState(false); // Modal holati
+    setStudents([...students, newStudent]); // Yangi studentni ro'yxatga qo'shish
+    form.resetFields(); // Formni tozalash
+    setIsModalVisible(false); // Modalni yopish
+    message.success('Student successfully added!');
+  };
 
-  const onFinish = (values) => {
-    // Student qo'shish
-    addMutation.mutate(values);
+  // Modalni ko'rsatish
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  // Modalni yopish
+  const handleCancel = () => {
+    setIsModalVisible(false);
     form.resetFields();
   };
 
-  const showModal = () => {
-    setIsModalVisible(true); // Modalni ko'rsatish
-  };
-
-  const handleCancel = () => {
-    setIsModalVisible(false); // Modalni yopish
-  };
-
-  if (isLoading) return <p>Loading...</p>;
-
   return (
-    <div className="fullscreen-container"> {/* Butun ekran to'ldiruvchi konteyner */}
-      <h2>Student List</h2>
-      <Button type="primary" onClick={showModal} style={{ marginBottom: 20 }}>
+    <div className="students-container">
+      <h2>Students List</h2>
+
+      {/* Foydalanuvchi ma'lumotlarini ko'rsatish */}
+      {user ? (
+        <div>
+          <p>Welcome, {user.username}!</p>
+          <p>Email: {user.email}</p>
+        </div>
+      ) : (
+        <p>No user data found.</p>
+      )}
+
+      {/* Create Student Button */}
+      <Button type="primary" onClick={showModal} style={{ marginBottom: '20px' }}>
         Create Student
       </Button>
 
+      {/* Studentlar ro'yxati */}
       <List
         itemLayout="horizontal"
-        dataSource={data}
+        dataSource={students}
         renderItem={(student) => (
           <List.Item
             actions={[
-              <Button type="link" danger onClick={() => deleteMutation.mutate(student.id)}>
+              <Button type="link" danger>
                 Delete
               </Button>,
             ]}
           >
-            <List.Item.Meta title={student.name} description={`${student.age} years old, ${student.address}`} />
+            <List.Item.Meta
+              title={student.name}
+              description={`${student.age} years old, ${student.address}`}
+            />
           </List.Item>
         )}
       />
 
-      {/* Student qo'shish uchun modal */}
+      {/* Create Student Modal */}
       <Modal
         title="Create Student"
         visible={isModalVisible}
         onCancel={handleCancel}
-        footer={null}
-        width="100%"  // Modalni to'liq kenglikka moslashtirish
+        footer={null} // Footerni olib tashlaymiz, biz o'zimizni footerni qo'shamiz
       >
-        <Form form={form} onFinish={onFinish} layout="vertical">
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onCreateStudent}
+        >
           <Form.Item
             label="Name"
             name="name"
-            rules={[{ required: true, message: 'Please enter student name' }]}
+            rules={[{ required: true, message: 'Please input the student name!' }]}
           >
             <Input />
           </Form.Item>
@@ -85,7 +107,7 @@ const Students = () => {
           <Form.Item
             label="Age"
             name="age"
-            rules={[{ required: true, message: 'Please enter student age' }]}
+            rules={[{ required: true, message: 'Please input the student age!' }]}
           >
             <Input type="number" />
           </Form.Item>
@@ -93,14 +115,16 @@ const Students = () => {
           <Form.Item
             label="Address"
             name="address"
-            rules={[{ required: true, message: 'Please enter student address' }]}
+            rules={[{ required: true, message: 'Please input the student address!' }]}
           >
             <Input />
           </Form.Item>
 
-          <Button type="primary" htmlType="submit" block>
-            Add Student
-          </Button>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block>
+              Add Student
+            </Button>
+          </Form.Item>
         </Form>
       </Modal>
     </div>
